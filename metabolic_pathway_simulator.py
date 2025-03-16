@@ -68,7 +68,7 @@ simulation_choice = st.sidebar.selectbox(
 
 # Load and run the selected simulation
 dispatcher = {
-    "Advanced Metabolic Pathway Simulation": lambda: metabolic_pathway_simulation(),
+    "Enzyme Reaction Kinetics": lambda: enzyme_kinetics_simulation(),
     "AI-Driven Optimization": ai_optimization,
 }
 
