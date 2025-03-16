@@ -2,7 +2,10 @@ import streamlit as st
 import numpy as np
 from scipy.integrate import odeint
 import plotly.graph_objects as go
-from deap import base, creator, tools, algorithms
+try:
+    from deap import base, creator, tools, algorithms
+except ImportError:
+    st.error("DEAP module is not installed. Please install it using 'pip install deap'.")
 import random
 
 # Define a function to simulate a more complex metabolic pathway
@@ -36,13 +39,11 @@ def ai_optimization():
         return (P_final,)
     
     # Set up Genetic Algorithm with DEAP
-        if not hasattr(creator, "FitnessMax"):
-            creator.create("FitnessMax", base.Fitness, weights=(1.0,))
+    if not hasattr(creator, "FitnessMax"):
+        creator.create("FitnessMax", base.Fitness, weights=(1.0,))
 
-        if not hasattr(creator, "Individual"):
-            creator.create("Individual", list, fitness=creator.FitnessMax)
-        if not hasattr(creator, "Individual"):
-            creator.create("Individual", list, fitness=creator.FitnessMax)
+if not hasattr(creator, "Individual"):
+    creator.create("Individual", list, fitness=creator.FitnessMax)
     toolbox = base.Toolbox()
     toolbox.register("attr_float", random.uniform, 0.1, 5.0)
     toolbox.register("individual", tools.initRepeat, creator.Individual, toolbox.attr_float, n=4)
@@ -89,7 +90,4 @@ dispatcher = {
 }
 
 dispatcher[simulation_choice]()
-
-
-
 
