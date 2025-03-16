@@ -38,10 +38,8 @@ def ai_optimization():
     # Set up Genetic Algorithm with DEAP
     if not hasattr(creator, "FitnessMax"):
     creator.create("FitnessMax", base.Fitness, weights=(1.0,))
-    creator.create("FitnessMax", base.Fitness, weights=(1.0,))
 
 if not hasattr(creator, "Individual"):
-    creator.create("Individual", list, fitness=creator.FitnessMax)
     creator.create("Individual", list, fitness=creator.FitnessMax)
     if not hasattr(creator, "Individual"):
     creator.create("Individual", list, fitness=creator.FitnessMax)
