@@ -2,20 +2,11 @@ import streamlit as st
 import numpy as np
 from scipy.integrate import odeint
 import plotly.graph_objects as go
+from deap import base, creator, tools, algorithms
+import random
 
 # Define a function to simulate a more complex metabolic pathway
-def metabolic_pathway():
-    st.header("Advanced Metabolic Pathway Simulator")
-    st.write("Simulate a complex metabolic pathway with multiple enzymatic reactions and feedback regulation.")
-    
-    # Sidebar inputs for reaction rates and initial concentrations
-    k1 = st.sidebar.slider("Enzyme 1 Reaction Rate (k1)", 0.1, 5.0, 1.0)
-    k2 = st.sidebar.slider("Enzyme 2 Reaction Rate (k2)", 0.1, 5.0, 1.0)
-    k3 = st.sidebar.slider("Enzyme 3 Reaction Rate (k3)", 0.1, 5.0, 1.0)
-    k_feedback = st.sidebar.slider("Feedback Inhibition Rate (k_feedback)", 0.0, 2.0, 0.5)
-    S0 = st.sidebar.slider("Initial Substrate Concentration (S0)", 0.1, 10.0, 5.0)
-    t_max = st.sidebar.slider("Simulation Time", 10, 200, 100)
-    
+def metabolic_pathway(k1, k2, k3, k_feedback, S0, t_max):
     # Define system of ODEs for the metabolic pathway with feedback inhibition
     def pathway_odes(y, t, k1, k2, k3, k_feedback):
         S, I, P, F = y  # S = Substrate, I = Intermediate, P = Product, F = Feedback Inhibitor
@@ -31,7 +22,42 @@ def metabolic_pathway():
     
     # Solve ODEs
     sol = odeint(pathway_odes, y0, t, args=(k1, k2, k3, k_feedback))
-    S, I, P, F = sol.T
+    return t, sol.T
+
+def ai_optimization():
+    st.header("AI-Driven Metabolic Pathway Optimization")
+    st.write("Using a Genetic Algorithm (GA) to optimize enzyme reaction rates for maximum product yield.")
+    
+    # Define fitness function for optimization
+    def fitness_function(individual):
+        k1, k2, k3, k_feedback = individual
+        _, results = metabolic_pathway(k1, k2, k3, k_feedback, S0=5.0, t_max=100)
+        P_final = results[2, -1]  # Final product concentration
+        return (P_final,)
+    
+    # Set up Genetic Algorithm with DEAP
+    creator.create("FitnessMax", base.Fitness, weights=(1.0,))
+    creator.create("Individual", list, fitness=creator.FitnessMax)
+    toolbox = base.Toolbox()
+    toolbox.register("attr_float", random.uniform, 0.1, 5.0)
+    toolbox.register("individual", tools.initRepeat, creator.Individual, toolbox.attr_float, n=4)
+    toolbox.register("population", tools.initRepeat, list, toolbox.individual)
+    toolbox.register("evaluate", fitness_function)
+    toolbox.register("mate", tools.cxBlend, alpha=0.5)
+    toolbox.register("mutate", tools.mutGaussian, mu=0, sigma=0.2, indpb=0.2)
+    toolbox.register("select", tools.selTournament, tournsize=3)
+    
+    # Run optimization
+    pop = toolbox.population(n=20)
+    algorithms.eaSimple(pop, toolbox, cxpb=0.5, mutpb=0.2, ngen=10, verbose=False)
+    best_ind = tools.selBest(pop, k=1)[0]
+    
+    # Run simulation with best parameters
+    t, sol = metabolic_pathway(*best_ind, S0=5.0, t_max=100)
+    S, I, P, F = sol
+    
+    # Display best parameters
+    st.write(f"Optimized Parameters: k1={best_ind[0]:.2f}, k2={best_ind[1]:.2f}, k3={best_ind[2]:.2f}, k_feedback={best_ind[3]:.2f}")
     
     # Interactive Plot
     fig = go.Figure()
@@ -39,22 +65,22 @@ def metabolic_pathway():
     fig.add_trace(go.Scatter(x=t, y=I, mode='lines', name='Intermediate (I)'))
     fig.add_trace(go.Scatter(x=t, y=P, mode='lines', name='Product (P)'))
     fig.add_trace(go.Scatter(x=t, y=F, mode='lines', name='Feedback Inhibitor (F)', line=dict(dash='dot')))
-    fig.update_layout(title="Advanced Metabolic Pathway Simulation", xaxis_title="Time", yaxis_title="Concentration")
+    fig.update_layout(title="Optimized Metabolic Pathway Simulation", xaxis_title="Time", yaxis_title="Concentration")
     
     st.plotly_chart(fig)
 
 # Streamlit App
-st.title("Metabolic Pathway Designer & Simulator")
+st.title("Metabolic Pathway Designer & AI Optimizer")
 
 # Sidebar for navigation
 simulation_choice = st.sidebar.selectbox(
     "Choose a Simulation:",
-    ("Advanced Metabolic Pathway Simulation",)
-)
+    ("Advanced Metabolic Pathway Simulation", "AI-Driven Optimization"))
 
 # Load and run the selected simulation
 dispatcher = {
-    "Advanced Metabolic Pathway Simulation": metabolic_pathway,
+    "Advanced Metabolic Pathway Simulation": lambda: metabolic_pathway(1.0, 1.0, 1.0, 0.5, 5.0, 100),
+    "AI-Driven Optimization": ai_optimization,
 }
 
 dispatcher[simulation_choice]()
