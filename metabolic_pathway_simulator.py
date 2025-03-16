@@ -68,9 +68,10 @@ simulation_choice = st.sidebar.selectbox(
 
 # Load and run the selected simulation
 dispatcher = {
-    "Enzyme Reaction Kinetics": lambda: enzyme_kinetics_simulation(),
-    "AI-Driven Optimization": ai_optimization,
+    
+    "AI-Driven Optimization": ai_optimization
 }
 
 dispatcher[simulation_choice]()
+
 
