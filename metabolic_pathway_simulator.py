@@ -36,13 +36,13 @@ def ai_optimization():
         return (P_final,)
     
     # Set up Genetic Algorithm with DEAP
-    if not hasattr(creator, "FitnessMax"):
-    creator.create("FitnessMax", base.Fitness, weights=(1.0,))
+        if not hasattr(creator, "FitnessMax"):
+            creator.create("FitnessMax", base.Fitness, weights=(1.0,))
 
-if not hasattr(creator, "Individual"):
-    creator.create("Individual", list, fitness=creator.FitnessMax)
-    if not hasattr(creator, "Individual"):
-    creator.create("Individual", list, fitness=creator.FitnessMax)
+        if not hasattr(creator, "Individual"):
+            creator.create("Individual", list, fitness=creator.FitnessMax)
+        if not hasattr(creator, "Individual"):
+            creator.create("Individual", list, fitness=creator.FitnessMax)
     toolbox = base.Toolbox()
     toolbox.register("attr_float", random.uniform, 0.1, 5.0)
     toolbox.register("individual", tools.initRepeat, creator.Individual, toolbox.attr_float, n=4)
@@ -89,6 +89,7 @@ dispatcher = {
 }
 
 dispatcher[simulation_choice]()
+
 
 
 
