@@ -64,7 +64,7 @@ st.title("Metabolic Pathway Designer & AI Optimizer")
 # Sidebar for navigation
 simulation_choice = st.sidebar.selectbox(
     "Choose a Simulation:",
-    ("Advanced Metabolic Pathway Simulation", "AI-Driven Optimization"))
+    ("AI-Driven Optimization",))
 
 # Load and run the selected simulation
 dispatcher = {
@@ -73,6 +73,3 @@ dispatcher = {
 }
 
 dispatcher[simulation_choice]()
-
-
-
