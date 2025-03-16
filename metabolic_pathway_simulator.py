@@ -2,10 +2,7 @@ import streamlit as st
 import numpy as np
 from scipy.integrate import odeint
 import plotly.graph_objects as go
-try:
-    from deap import base, creator, tools, algorithms
-except ImportError:
-    st.error("DEAP module is not installed. Please install it using 'pip install deap'.")
+from scipy.optimize import differential_evolution
 import random
 
 # Define a function to simulate a more complex metabolic pathway
@@ -27,45 +24,29 @@ def metabolic_pathway(k1, k2, k3, k_feedback, S0, t_max):
     sol = odeint(pathway_odes, y0, t, args=(k1, k2, k3, k_feedback))
     return t, sol.T
 
+# AI Optimization using Scipy's Differential Evolution
 def ai_optimization():
     st.header("AI-Driven Metabolic Pathway Optimization")
-    st.write("Using a Genetic Algorithm (GA) to optimize enzyme reaction rates for maximum product yield.")
+    st.write("Using Differential Evolution (Scipy) to optimize enzyme reaction rates for maximum product yield.")
     
     # Define fitness function for optimization
-    def fitness_function(individual):
-        k1, k2, k3, k_feedback = individual
+    def fitness_function(params):
+        k1, k2, k3, k_feedback = params
         _, results = metabolic_pathway(k1, k2, k3, k_feedback, S0=5.0, t_max=100)
         P_final = results[2, -1]  # Final product concentration
-        return (P_final,)
+        return -P_final  # Negative sign since we want to maximize
     
-    # Set up Genetic Algorithm with DEAP
-    if not hasattr(creator, "FitnessMax"):
-        creator.create("FitnessMax", base.Fitness, weights=(1.0,))
-creator.create("FitnessMax", base.Fitness, weights=(1.0,))
-
-if not hasattr(creator, "Individual"):
-    creator.create("Individual", list, fitness=creator.FitnessMax)
-    creator.create("Individual", list, fitness=creator.FitnessMax)
-    toolbox = base.Toolbox()
-    toolbox.register("attr_float", random.uniform, 0.1, 5.0)
-    toolbox.register("individual", tools.initRepeat, creator.Individual, toolbox.attr_float, n=4)
-    toolbox.register("population", tools.initRepeat, list, toolbox.individual)
-    toolbox.register("evaluate", fitness_function)
-    toolbox.register("mate", tools.cxBlend, alpha=0.5)
-    toolbox.register("mutate", tools.mutGaussian, mu=0, sigma=0.2, indpb=0.2)
-    toolbox.register("select", tools.selTournament, tournsize=3)
-    
-    # Run optimization
-    pop = toolbox.population(n=20)
-    algorithms.eaSimple(pop, toolbox, cxpb=0.5, mutpb=0.2, ngen=10, verbose=False)
-    best_ind = tools.selBest(pop, k=1)[0]
+    # Run Differential Evolution Optimization
+    bounds = [(0.1, 5.0), (0.1, 5.0), (0.1, 5.0), (0.0, 2.0)]
+    result = differential_evolution(fitness_function, bounds, strategy='best1bin', maxiter=20, popsize=10)
+    best_params = result.x
     
     # Run simulation with best parameters
-    t, sol = metabolic_pathway(*best_ind, S0=5.0, t_max=100)
+    t, sol = metabolic_pathway(*best_params, S0=5.0, t_max=100)
     S, I, P, F = sol
     
     # Display best parameters
-    st.write(f"Optimized Parameters: k1={best_ind[0]:.2f}, k2={best_ind[1]:.2f}, k3={best_ind[2]:.2f}, k_feedback={best_ind[3]:.2f}")
+    st.write(f"Optimized Parameters: k1={best_params[0]:.2f}, k2={best_params[1]:.2f}, k3={best_params[2]:.2f}, k_feedback={best_params[3]:.2f}")
     
     # Interactive Plot
     fig = go.Figure()
@@ -87,7 +68,7 @@ simulation_choice = st.sidebar.selectbox(
 
 # Load and run the selected simulation
 dispatcher = {
-    "Advanced Metabolic Pathway Simulation": lambda: display_metabolic_simulation(),
+    "Advanced Metabolic Pathway Simulation": ai_optimization,
     "AI-Driven Optimization": ai_optimization,
 }
 
